@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CognoSpace Block Studio</title>
+<link rel="icon" id="favicon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/blockly@12.5.1/blockly_compressed.js"></script>
+<script src="https://unpkg.com/blockly@12.5.1/blocks_compressed.js"></script>
+<script src="https://unpkg.com/blockly@12.5.1/python_compressed.js"></script>
+<script src="https://unpkg.com/blockly@12.5.1/msg/en.js"></script>
+<style>
+:root{
+  --or:#F7931E; --or2:#FF6B1A; --ink:#3A3A3A; --mut:#7B7B7B; --bg:#FFF8EF; --card:#FFFFFF; --line:#F3E2CC;
+  --green:#22C55E; --red:#EF4444; --sky:#0EA5E9; --vio:#8B5CF6; --sun:#FFD23F; --pink:#EC4899; --teal:#10B981;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit}
+/* ---------- header ---------- */
+header{display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-bottom:4px solid var(--or);box-shadow:0 6px 22px rgba(247,147,30,.14);flex-wrap:wrap;position:relative;z-index:20}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand img{height:44px;display:block}
+.tag{font-family:'Fredoka';font-weight:600;background:linear-gradient(135deg,#FFC93C,#F7931E 60%,#FF6B1A);color:#fff;padding:6px 14px;border-radius:999px;font-size:15px;letter-spacing:.3px;box-shadow:0 3px 0 #E07B0C}
+.proj{display:flex;align-items:center;gap:6px;background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:4px 10px}
+.proj input{border:none;background:transparent;font:700 15px 'Nunito';color:var(--ink);width:170px;outline:none}
+.spacer{flex:1}
+.group{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{font-family:'Fredoka';font-weight:500;border:none;border-radius:14px;padding:9px 14px;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+  background:#fff;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line);transition:transform .12s,box-shadow .15s,background .15s;white-space:nowrap}
+.btn:hover{transform:translateY(-2px);background:#FFFBF5}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn .ic{font-size:17px;line-height:1}
+.btn.connect{background:#E0F2FE;color:#0369A1;box-shadow:inset 0 0 0 2px #7DD3FC}
+.btn.connect.on{background:#DCFCE7;color:#15803D;box-shadow:inset 0 0 0 2px #86EFAC}
+.dot{width:10px;height:10px;border-radius:50%;background:#94A3B8;display:inline-block}
+.btn.connect.on .dot{background:var(--green);box-shadow:0 0 0 4px rgba(34,197,94,.25);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(34,197,94,.08)}}
+.btn.upload{background:linear-gradient(135deg,#FFA62B,#FF6B1A);color:#fff;box-shadow:0 5px 0 #D9530C,0 10px 22px rgba(255,107,26,.32);padding:10px 22px;font-size:17px;font-weight:600}
+.btn.upload:hover{background:linear-gradient(135deg,#FFB443,#FF7A2E)}
+.btn.upload:active{transform:translateY(4px);box-shadow:0 1px 0 #D9530C}
+.btn.stop{background:#FEE2E2;color:#B91C1C;box-shadow:inset 0 0 0 2px #FCA5A5}
+.btn.small{padding:6px 10px;font-size:13px;border-radius:11px}
+.btn.ghost{box-shadow:none;background:transparent}
+/* ---------- banner ---------- */
+.banner{display:none;background:#FFF3C4;color:#8A5A00;font-weight:700;padding:8px 16px;font-size:14px;border-bottom:2px solid #FFE08A;text-align:center}
+.banner.show{display:block}
+/* ---------- main ---------- */
+main{flex:1;display:flex;min-height:0;position:relative}
+#blocklyWrap{flex:1;position:relative;min-width:0}
+#blocklyDiv{position:absolute;inset:0}
+aside{width:410px;background:#fff;border-left:3px solid var(--line);display:flex;flex-direction:column;min-height:0;transition:width .25s}
+aside.collapsed{width:0;border-left-width:0;overflow:hidden}
+.panelToggle{position:absolute;right:410px;top:14px;z-index:6;transform:translateX(50%);width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:#fff;cursor:pointer;font-weight:800;color:var(--or);box-shadow:0 3px 10px rgba(0,0,0,.08);transition:right .25s}
+aside.collapsed + .panelToggle, .panelToggle.c{right:0;transform:translateX(-120%)}
+.tabs{display:flex;gap:6px;padding:10px 10px 0;background:linear-gradient(180deg,#FFF6EA,#fff)}
+.tab{flex:1;border:none;background:transparent;padding:10px 6px;border-radius:14px 14px 0 0;font:600 15px 'Fredoka';color:var(--mut);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab.active{background:#fff;color:var(--ink);box-shadow:0 -3px 0 var(--or) inset}
+.tab .badge{background:var(--pink);color:#fff;border-radius:999px;font-size:11px;padding:1px 7px;display:none}
+.tab .badge.show{display:inline-block}
+.pane{display:none;flex:1;min-height:0;flex-direction:column}
+.pane.active{display:flex}
+.paneBar{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:2px dashed var(--line)}
+.paneBar .title{font:600 14px 'Fredoka';color:var(--mut);flex:1}
+/* code */
+#code{flex:1;overflow:auto;margin:0;padding:12px 0;font:13px/1.65 'JetBrains Mono',monospace;background:#FFFDF8;counter-reset:ln}
+#code .l{display:block;padding:0 14px 0 52px;position:relative;white-space:pre}
+#code .l::before{counter-increment:ln;content:counter(ln);position:absolute;left:0;width:38px;text-align:right;color:#D7C3A8}
+#code .k{color:#D946EF;font-weight:600}#code .s{color:#16A34A}#code .n{color:#EA580C}#code .c{color:#94A3B8;font-style:italic}#code .f{color:#0284C7;font-weight:600}
+/* monitor */
+#monitor{flex:1;overflow:auto;margin:0;padding:12px 14px;font:13px/1.6 'JetBrains Mono',monospace;background:#FFFDF8;white-space:pre-wrap;word-break:break-word;position:relative}
+#monitor .err{color:#DC2626;background:#FEF2F2;display:inline}
+#monitor .sys{color:#A3A3A3}
+.monEmpty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#C9B79F;font:500 15px 'Fredoka';gap:10px;pointer-events:none;text-align:center;padding:20px}
+.monEmpty img{width:72px;opacity:.35;filter:grayscale(.2)}
+.sendRow{display:flex;gap:6px;padding:8px 10px;border-top:2px dashed var(--line)}
+.sendRow input{flex:1;border:2px solid var(--line);border-radius:12px;padding:8px 10px;font:14px 'JetBrains Mono';outline:none}
+.sendRow input:focus{border-color:var(--or)}
+/* pins */
+#pinsPane{overflow:auto;padding:12px 14px 20px}
+.pinCard{border-radius:16px;padding:12px 14px;margin-bottom:12px;border:2px solid}
+.pinCard h4{margin:0 0 4px;font:600 16px 'Fredoka';display:flex;align-items:center;gap:7px}
+.pinCard p{margin:0 0 8px;font-size:13px;color:#555}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:700 13px 'JetBrains Mono';background:#fff;border-radius:10px;padding:4px 9px;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.wire{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:13px}
+.wire td{background:#FFF8EF;padding:7px 9px}
+.wire td:first-child{border-radius:10px 0 0 10px;font-weight:700}
+.wire td:last-child{border-radius:0 10px 10px 0;font:700 13px 'JetBrains Mono';color:var(--or2);text-align:right}
+/* status bar */
+footer{display:flex;align-items:center;gap:14px;padding:6px 16px;background:#fff;border-top:2px solid var(--line);font-size:13px;color:var(--mut)}
+footer a{color:var(--or2);font-weight:800;text-decoration:none}
+footer img{height:18px;vertical-align:middle}
+#statusText{font-weight:700}
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(255,248,239,.72);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:28px;box-shadow:0 30px 80px rgba(160,90,10,.25),0 0 0 3px var(--line);max-width:860px;width:100%;max-height:92vh;overflow:auto;position:relative;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.9) translateY(20px);opacity:0}}
+.modal .close{position:absolute;right:14px;top:14px;border:none;background:var(--bg);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;color:var(--mut)}
+.mhead{padding:26px 30px 6px}
+.mhead h2{font:600 26px 'Fredoka';margin:0 0 4px}
+.mhead p{margin:0;color:var(--mut)}
+.mbody{padding:16px 30px 28px}
+/* welcome */
+.hero{position:relative;overflow:hidden;border-radius:28px 28px 0 0;background:linear-gradient(135deg,#FFF4E0 0%,#FFE7F1 50%,#E6F6FF 100%);padding:34px 30px 26px;text-align:center}
+.blob{position:absolute;border-radius:50%;filter:blur(2px);opacity:.55}
+.hero .logo{max-width:420px;width:80%;position:relative}
+.hero h1{font:700 34px 'Fredoka';margin:16px 0 4px;position:relative;background:linear-gradient(90deg,#FF6B1A,#EC4899,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{position:relative;margin:0;color:#6B6B6B;font-size:16px;font-weight:600}
+.floatIcon{position:absolute;width:74px;right:28px;top:22px;animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-10px) rotate(6deg)}}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:6px 0 18px}
+.step{border-radius:20px;padding:18px 16px;text-align:center;position:relative}
+.step .num{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:#fff;font:700 15px 'Fredoka';display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.12)}
+.step .emo{font-size:38px}
+.step h3{font:600 18px 'Fredoka';margin:6px 0 4px}
+.step p{margin:0;font-size:13.5px;color:#555}
+.ctaRow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.note{margin-top:16px;background:#F0F9FF;border:2px dashed #7DD3FC;border-radius:16px;padding:10px 14px;font-size:13.5px;color:#075985}
+/* examples */
+.exGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.exCard{border:none;text-align:left;border-radius:20px;padding:16px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 0 0 2px rgba(0,0,0,.04)}
+.exCard:hover{transform:translateY(-4px) rotate(-.5deg);box-shadow:0 12px 24px rgba(0,0,0,.08)}
+.exCard .emo{font-size:34px}
+.exCard h3{font:600 18px 'Fredoka';margin:6px 0 2px}
+.exCard p{margin:0 0 8px;font-size:13px;color:#555}
+.exCard .parts{font:700 11.5px 'JetBrains Mono';color:#7a5a2a;background:rgba(255,255,255,.7);border-radius:10px;padding:5px 8px;display:inline-block}
+.lvl{font:600 11px 'Fredoka';padding:2px 8px;border-radius:999px;background:#fff;margin-left:6px;vertical-align:middle}
+/* progress */
+.prog{text-align:center;padding:34px 30px}
+.prog img{width:86px;animation:spin 1.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.prog h3{font:600 22px 'Fredoka';margin:14px 0 6px}
+.bar{height:14px;background:#FFF1DE;border-radius:999px;overflow:hidden;margin:14px 0 6px;box-shadow:inset 0 0 0 2px var(--line)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FFC93C,#FF6B1A,#EC4899);border-radius:999px;transition:width .3s}
+.prog small{color:var(--mut)}
+.result .big{font-size:60px}
+/* toast */
+#toasts{position:fixed;bottom:44px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:200;align-items:center}
+.toast{background:#fff;padding:10px 18px;border-radius:14px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.12),inset 4px 0 0 var(--or);animation:pop .3s}
+.toast.ok{box-shadow:0 10px 30px rgba(0,0,0,.12),inset 4px 0 0 var(--green)}
+.toast.bad{box-shadow:0 10px 30px rgba(0,0,0,.12),inset 4px 0 0 var(--red)}
+/* blockly tweaks */
+.blocklyToolboxDiv,.blocklyToolbox{background:#fff !important;border-right:3px solid var(--line);padding-top:8px}
+.blocklyTreeRow,.blocklyToolboxCategory{height:auto !important;padding:7px 10px 7px 6px !important;margin:2px 8px 4px 6px !important;border-radius:12px !important;line-height:22px}
+.blocklyTreeLabel,.blocklyToolboxCategoryLabel{font:600 15px 'Fredoka' !important;color:#444}
+.blocklyTreeSelected .blocklyTreeLabel,.blocklyToolboxSelected .blocklyToolboxCategoryLabel{color:#fff !important}
+.blocklyTreeIcon,.blocklyToolboxCategoryIcon{display:none !important}
+.blocklyFlyoutBackground{fill:#FFF4E6 !important;fill-opacity:1 !important}
+.blocklyMainBackground{stroke:none !important}
+.blocklyWidgetDiv .blocklyMenu,.blocklyDropDownDiv{border-radius:12px !important}
+@media (max-width:1000px){aside{width:330px}.panelToggle{right:330px}.proj input{width:120px}.steps{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="https://www.cognospace.in" target="_blank" rel="noopener" title="CognoSpace">
+    <img data-logo alt="CognoSpace — Experiential Learning">
+  </a>
+  <span class="tag">Block Studio</span>
+  <label class="proj" title="Project name">✏️ <input id="projName" value="My Coggy Project" maxlength="40"></label>
+  <div class="spacer"></div>
+  <div class="group">
+    <button class="btn" id="btnExamples"><span class="ic">✨</span>Examples</button>
+    <button class="btn" id="btnNew" title="New project"><span class="ic">📄</span>New</button>
+    <button class="btn" id="btnOpen" title="Open a saved project"><span class="ic">📂</span>Open</button>
+    <button class="btn" id="btnSave" title="Save project to your computer (Ctrl+S)"><span class="ic">💾</span>Save</button>
+    <button class="btn" id="btnHelp" title="How to use"><span class="ic">❓</span></button>
+  </div>
+  <div class="group">
+    <button class="btn connect" id="btnConnect"><span class="dot"></span><span id="connLabel">Connect Coggy</span></button>
+    <button class="btn upload" id="btnUpload"><span class="ic">🚀</span>Upload</button>
+    <button class="btn stop" id="btnStop" title="Stop the program on Coggy"><span class="ic">⏹</span>Stop</button>
+  </div>
+  <input type="file" id="fileOpen" accept=".json,.coggy" hidden>
+</header>
+<div class="banner" id="serialBanner">🔌 To upload over USB, please open this page in <b>Google Chrome</b> or <b>Microsoft Edge</b> on a computer. You can still build and save programs here.</div>
+
+<main>
+  <div id="blocklyWrap"><div id="blocklyDiv"></div></div>
+  <aside id="side">
+    <div class="tabs">
+      <button class="tab active" data-tab="codePane">🐍 Code</button>
+      <button class="tab" data-tab="monPane">📟 Monitor <span class="badge" id="monBadge">new</span></button>
+      <button class="tab" data-tab="pinsPane">📍 Pins</button>
+    </div>
+    <div class="pane active" id="codePane">
+      <div class="paneBar"><span class="title">MicroPython made from your blocks</span>
+        <button class="btn small" id="btnCopy">📋 Copy</button>
+        <button class="btn small" id="btnDlPy">⬇️ .py</button></div>
+      <pre id="code"></pre>
+    </div>
+    <div class="pane" id="monPane">
+      <div class="paneBar"><span class="title">Messages from Coggy</span>
+        <button class="btn small" id="btnReset" title="Restart Coggy">🔄 Restart</button>
+        <button class="btn small" id="btnErase" title="Remove the program saved on Coggy">🧹 Erase</button>
+        <button class="btn small" id="btnClearMon">🗑️ Clear</button></div>
+      <pre id="monitor"></pre>
+      <div class="monEmpty" id="monEmpty"><img data-icon alt="">Connect Coggy and upload a program.<br>Anything you <b>print</b> shows up here!</div>
+      <div class="sendRow"><input id="sendInput" placeholder="Type a message to send to Coggy…"><button class="btn small" id="btnSend">Send ➤</button></div>
+    </div>
+    <div class="pane" id="pinsPane">
+      <div class="pinCard" style="background:#FFF7E0;border-color:#FFE08A">
+        <h4>💡 Outputs — LEDs, buzzer, relay</h4>
+        <p>These pins can switch things on and off. Pin <b>2</b> is the little LED on Coggy itself.</p>
+        <div class="chips"><span class="chip" style="color:#D97706">2 ★</span><span class="chip">4</span><span class="chip">5</span><span class="chip">13</span><span class="chip">14</span><span class="chip">16</span><span class="chip">17</span><span class="chip">18</span><span class="chip">19</span><span class="chip">23</span><span class="chip">25</span><span class="chip">26</span><span class="chip">27</span><span class="chip">32</span><span class="chip">33</span></div>
+      </div>
+      <div class="pinCard" style="background:#E8FBF3;border-color:#A7F0CF">
+        <h4>📈 Analog sensors — LDR, knob, soil, gas</h4>
+        <p>Read values from 0 to 4095. Pins 34, 35, 36, 39 are <b>input only</b> — perfect for sensors, not for LEDs.</p>
+        <div class="chips"><span class="chip">32</span><span class="chip">33</span><span class="chip">34</span><span class="chip">35</span><span class="chip">36</span><span class="chip">39</span></div>
+      </div>
+      <div class="pinCard" style="background:#F3EEFF;border-color:#D4C4FD">
+        <h4>🖥️ OLED display (I²C)</h4>
+        <p>Connect VCC → 3V3, GND → GND, and these two wires:</p>
+        <div class="chips"><span class="chip">SDA → 21</span><span class="chip">SCL → 22</span></div>
+      </div>
+      <div class="pinCard" style="background:#E8F6FF;border-color:#A5DBFB">
+        <h4>👆 Touch pins</h4>
+        <p>Touch a wire on these pins and the value drops.</p>
+        <div class="chips"><span class="chip">4</span><span class="chip">13</span><span class="chip">14</span><span class="chip">15</span><span class="chip">27</span><span class="chip">32</span><span class="chip">33</span></div>
+      </div>
+      <div class="pinCard" style="background:#FFEFF2;border-color:#FDB8C4">
+        <h4>⛔ Avoid these</h4>
+        <p><b>6–11</b> are used by Coggy's memory. <b>1</b> and <b>3</b> talk to the USB cable. <b>0, 12, 15</b> can stop Coggy from starting if wired wrong.</p>
+      </div>
+      <h4 style="font:600 16px Fredoka;margin:16px 2px 4px">🧰 Suggested kit wiring (used in Examples)</h4>
+      <table class="wire">
+        <tr><td>💡 Onboard LED</td><td>2</td></tr>
+        <tr><td>🚦 Traffic LEDs R / Y / G</td><td>25 / 26 / 27</td></tr>
+        <tr><td>🌈 RGB LED R / G / B</td><td>16 / 17 / 19</td></tr>
+        <tr><td>🎵 Buzzer</td><td>23</td></tr>
+        <tr><td>🔘 Push button</td><td>13</td></tr>
+        <tr><td>📏 Ultrasonic TRIG / ECHO</td><td>5 / 18</td></tr>
+        <tr><td>🌡️ DHT11</td><td>4</td></tr>
+        <tr><td>☀️ LDR light sensor</td><td>34</td></tr>
+        <tr><td>🎚️ Potentiometer</td><td>35</td></tr>
+        <tr><td>👀 IR / PIR sensor</td><td>14</td></tr>
+        <tr><td>🖥️ OLED SDA / SCL</td><td>21 / 22</td></tr>
+      </table>
+    </div>
+  </aside>
+  <button class="panelToggle" id="panelToggle" title="Show / hide panel">›</button>
+</main>
+
+<footer>
+  <span>● <span id="statusText">Not connected</span></span>
+  <span id="blockCount"></span>
+  <div class="spacer"></div>
+  <span>Made with ♥ by <a href="https://www.cognospace.in" target="_blank" rel="noopener"><img data-icon alt=""> CognoSpace</a> · Experiential Learning</span>
+</footer>
+
+<!-- Welcome -->
+<div class="overlay" id="welcome">
+  <div class="modal">
+    <button class="close" data-close>✕</button>
+    <div class="hero">
+      <div class="blob" style="width:180px;height:180px;background:#FFD23F;left:-50px;top:-60px"></div>
+      <div class="blob" style="width:140px;height:140px;background:#F9A8D4;right:120px;bottom:-70px"></div>
+      <div class="blob" style="width:120px;height:120px;background:#7DD3FC;left:30%;bottom:-60px"></div>
+      <img class="floatIcon" data-icon alt="">
+      <img class="logo" data-logo alt="CognoSpace">
+      <h1>Welcome to Block Studio!</h1>
+      <p>Snap colourful blocks together and bring your Coggy to life — LEDs, sensors and an OLED screen.</p>
+    </div>
+    <div class="mbody">
+      <div class="steps">
+        <div class="step" style="background:#E0F2FE"><span class="num">1</span><div class="emo">🔌</div><h3>Plug in Coggy</h3><p>Connect Coggy with a USB cable, then click <b>Connect Coggy</b>.</p></div>
+        <div class="step" style="background:#FFF4D6"><span class="num">2</span><div class="emo">🧩</div><h3>Snap blocks</h3><p>Drag blocks into the <b>Coggy Program</b>. Type the pin number where you wired your part.</p></div>
+        <div class="step" style="background:#FFE4EF"><span class="num">3</span><div class="emo">🚀</div><h3>Upload!</h3><p>Click <b>Upload</b> and watch your LEDs, sensors and OLED come alive.</p></div>
+      </div>
+      <div class="ctaRow">
+        <button class="btn upload" data-close>🎨 Start coding</button>
+        <button class="btn" id="welcomeExamples">✨ Try an example</button>
+      </div>
+      <div class="note">🛠️ <b>First time with this Coggy?</b> It needs <b>MicroPython firmware</b> (a one-time setup by your teacher). Block Studio installs its own helper library automatically on the first upload.</div>
+      <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:12px;font-size:13px;color:var(--mut)"><input type="checkbox" id="noWelcome"> Don't show this again</label>
+    </div>
+  </div>
+</div>
+
+<!-- Examples -->
+<div class="overlay" id="examples">
+  <div class="modal">
+    <button class="close" data-close>✕</button>
+    <div class="mhead"><h2>✨ Example projects</h2><p>Pick one to load it. Check the wiring under each card!</p></div>
+    <div class="mbody"><div class="exGrid" id="exGrid"></div></div>
+  </div>
+</div>
+
+<!-- Progress / result -->
+<div class="overlay" id="progress">
+  <div class="modal" style="max-width:460px">
+    <div class="prog" id="progBody">
+      <img data-icon alt="">
+      <h3 id="progTitle">Uploading…</h3>
+      <div class="bar"><i id="progBar"></i></div>
+      <small id="progStep">Getting ready</small>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="message">
+  <div class="modal" style="max-width:520px">
+    <button class="close" data-close>✕</button>
+    <div class="prog result" id="msgBody"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* =====================================================================
+   CognoSpace Block Studio — block-based programming for Coggy
+   Blocks → MicroPython → USB (Web Serial, raw REPL) → main.py on Coggy
+   ===================================================================== */
+const ICON = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAMAAAC8EZcfAAABIFBMVEXZhxnRfBrn5ue4eCX8zpfR0dHv7vCeb1CsbR79rE3p5OD3my+Gb1SsqqxpX2KanqQFCv/ZhBvLfSB1WTb+wXnqjRvAvbzEeyIRWu5ZW2BeapO5iyq9wccfNH8xU3YAb78A//92eoB9g4qYinm4u8LyyJM/Pz8AP79/Pz9/fz9/f/+qhEuq/6rIf0j/v3/tr2fGvMbAv8AAAAD9jABXVlb9+/xNTEz+kQL1igTyiQb+fwDuiAnrhwrxiQfo6Oi3t7d3dnf+/v5paGinp6iIiIiYl5jHxsfY19j//wD/qgD/AAD96NHohg3/VQDYgxiQZzSzeTP9mijWghhnXVCudCnMexbWghb+2Kzp6OlyYkx/fwCqVQD09PR+fn7GfSb+uWpTdYPXAAAAYHRSTlMZH2AY/iqkDfz+8Pb7DQn8AWdQ/P+W+/sD/AYN/AUHBgH7+/v7rQQEBAQCGwMOBKAb/QD9/v79/tGtAnBQjfz8+wL7+/v7/PwBAwH+MgMy/BL+Tfz7/Pv+kPwCA9ECL/6WAYmWAAAQPklEQVR42u2cd3viOBrAzaT3MmX77d6W69UGW3KDGIMNMQRCyiSZyXz/b3EqLjKWZFGyu/c8oz/uuZ1Qfrz9fS1J03/nS/sM+BnwM+BnwNIaxrFtD9Jl23Y8/P0A2nhxkO3RyH78jQGHj6MU7XiiNZLz82u0zs6TxnNjJ8McPA5/I8AUbqdx7TgeBMBgFwDQc9xx4xS/5Okp/tUB4xH+zj80zjwCZllWiS/7B4R5rX1N7CD+FQFjLLvTjWsHIhJDuhAngM71hDD+SoCPT/j919CopWM07l1joxwMXx4Qy2HiIsUqw1FJIsbxd+jt8csC4s9vOIvSpYgGxGJURFwK8BFJ79kDS9DlYnQmiopeAnA4wHjGigucYcSXAESq2fAMa1VAw8JSHNrrBkTiOz0DxnoWuNb10XCtgPZQb0BjXcsy4BghrhFwpH/prEG77Do7xr96PYDIYDRorHtBpGd7LYCoGrk2XmKdnUrcWR3Q1r93XoTPsOCGOCZq6ua34xkvtZA7x/FqgBv6BrCMl1tnXwoMUVOV38vyIV/Z0Z+WBxzo58bL8lFDXBZwoD+/DJUDLSb1aTxCTYnvbMEvvru9vbtTeJ02YQgN0NDjZQCfqvKrtB4s3M3hrInX7OHw6kaO6eqTUmg4r3qKphD/NuaKg4PNy/3LzQPeN97ePDTL60EK6eqnLmRy87hCWAsY6ztz/vumRdenytdV6NI1u0oZp282N9/s7TGfh/LcRpbeLcPR9OGCgEN7B5b5PrVafMKbWVO8HogcN+kbNw2WMNbHuLWxDG+8hBcPdK/MN20Vi9XyrgyvaZrN5uGddU/fd88mkQ2sVc2FXsItDrU6A3Tn1PiJAWxd5mvzJAxMMV/YbTa/al7tM4DWXhr/duIn3F4LGmatxoHH83a22RItv9cUIJrdVquPpPhHP30pYkPSvCe6sTwkhnikj5ZIdXF8DNUBEUTIR+ziP0a9PiP6T5f4f6fkI5+Xrgft02oBU1Vx1MarT6QTIcRssfITrEuLKHlZQJtXoDJOso8FYB3MKE/Qpoj9dLWDFLAnkTnVskyEmizCHPPat7kwc1NoMmiXFa4ASAOBs1xFbQtScGaFb/B/fFFyhg5jZq2oXsU0IiI3WQbQFpYwe9jA7w8KvtzezGan1yUrQhaQg7flGracJQE9YUUwnVL/uyNUQRh2MvfNPKTDAJphofaTMDwpxLxH66xn/XFxQFs/txyvpkqdYTzsv37UKQeYTqHiZjMj8jvN3d3dq2YeDy9xYQQ1PV7ci4fxBgAbNTOOQ0wSpV8Wlq0xAzQJLOULXtOi4XWQR2wLuNK2WAho647lOHIBEgeOWoV4mIUQIgRnHvajKKP58XX6edbVj3kk9Lff/+XiYmHAx3hSK8Dbsnm12mZZgn6IVsSGneK9D6y7v9IXB8Qe4rpyBT/Mh5A8RqPlV1325KqoTK9KoWdLQqgJQwyYwHoFm+2W8gp3C8DdkP3L+yUAkQATeV/UXBSwd8MAltLLhy3940KAj3oDGBN5jLmigMwXRdjmwh4OOr0Q21i71wt9roqN3fIPk1ihxp8jIBee1HpI6q25CmmIbmN3wc7j46jNOEM0YwLUfgnww5HQkXmA8XAHGA25i1xVskS7mSsd/V8CiMNkt9uOchFa8xqO2t2uLxWhxhWga8FTKNSwNZ0eFNVeGkm6TRbQzABxLMylnLlJ4SIo/5CfuP1xEcDHU+QiDRHe3iaqFfZ7Rchrovqglzck84ClYuHk8Ob2dvfwpBw6I1mk4QAO9QkwvhFp+NNctZcVCM0yYIcBZKL5/rfd7rf7jNlmjvZqAUDcKUFdoOGD1pzNVRqkAjArqZuRKPJEQeZo2wsA4lbY/acgzd0Xn94xuSsHbAVzxQyvzcorWpGONe6sw5gINMy27VFam84tPwdMKzBpLO+ZNHELs4nGySJYw4J5+Z5SzigDSir+zAwikk0uVAEdy/sbXAWwR2vAFFDSk/j0JeQVr1QBY2yCokrLumQ+vdvmr16zBJjKsB10/eKttAPMXhG0hG6iVYNMAxraWBQFN2udhIQcM2ABMWEXt85+5rzoNV1UMObBE/nR9p/UAGO9YYAdYS1diLBnysZZHT+NcmkkDE0m3lDf7RTTJhIK+Uao8XzE08V5bnqfTYokw7aej2Xlh6XxW1GctbNuhS3ABUaoVRPxteWcyor9n06QmQXSaWAa+bqcID7fHBR/UAQcICdOGrJC5jWb2eYXVVufkZQZFLLq4Ia+1Q044zlRnOGoGMpLrbtZeZpQWn0cOEwzszXsLqEfBaVM7c9POomCkQA/KjoJBF+6taVq0O9XtRxgyYVBmOe2djjrFeEula1feWMkqRa0Ct8xALpT2yz1OJYUUMGVGjqfDcgCCb6T9U1apR2ZiBNdUUtjwKiiX3FuiQIxYIcY4IUiYKxrKMrI+qWr/FM7VUsXri6T9ubHOLjaOlIFxB2xLAzSfr3ZnEWVUN3xFSTIASSSf6UfqQE+6eeGcyoDnOWfOmeEZqeuaElTRofzPuWC9Um/NpxjUNewE2OKgqZQydG3faaOLpIuB5CGadWC9Ul3DUdTAOxwvikvTX8OZg8PzWIg3JMDHkr6Oq4EZYC3TPBijZApVlons13qTplI/Syuk/4pNHmBUODHXMCJAiDWJxtoOmH+oKb7On9tJtN+L+yIAcm/vue7icZ5ei2deuQSDFllsXNCZsSxy0xGivajKkHiyPxIUw0zDUXA4JLxY3aIlE84cGHBdEz9oBN22txKMhXhhVIm0YDzjYoNEj/mOTAzBzSuQkEnx7FClE0+qqU6r1Hvxanv5TmWBbxdHFDcNmmVluRr4P1VBZD86ndmVcWsBHd7vKjNkeDMFwzhePUg/LNCJkkNp2NWnKTL2OCMKSDaHboCfpcgECGnoobgOyXAZrBfuEkn8v1cQpmOrZs8+/l+FJrlMdNcrYbevn9UtUKtuovMA8debbGQGU6eZWdBkKmzP6PbOKzdfGzUC4KaPQ2itoTTNLnG2LHqZ6vpr2Z6yzzo/fywi4R4exX05x58ivCCkM5h948qdT+37XRrK+oi0vTNuUf/ZAx40nl46BSThFDaQzd7kXiazm3cHVcRMGSGbHNzLN+viXxl/8gf6RzVjz42ABwbSnGG6LjHyyaVhzgyQiy/7fd4vfpYb4OIEIJnYKi4MS1b6+vV+SeNVf99tcCTJhu1TA2o5iWlkiaIWvUltUCCry7oUgN0kZdYykZYlPOBv5yK8WjrSH1G/Yi8xJMZoSEATNsmn+0+/XY9n3mCstzFAkN0nOwEJSvIH7Qzj4U7TDyLWlHH7HSLOaUZ+swcUPhc4MPWQlN+12jwcwkEZR3PAeKQFszPZoJuII+C2DLeL/IoDEdCwcNsSJznTqTifOgXCeaAwjC4JWqL+Q8TkY53coWWVOyU0zGZgARcpfHmg0IN7x8LHxhr3E2NjoH3XYLqqN8lIrxhc0efOwEOe2mbVA/YxZXgQoC4L3GxH3vzMrQ8tyRCbD5dk1+dSKac1cHCYo9jiR/j6QJHhGPAiJAU6kFzxfVuccCRnhgajtWV7YOW41p5uiO/vWuuhkd8ZP8/Cz1xR+l4BzhEx5VoA8bECq8In1+Tw5RWJIuCol0fI90BZHuyC6oiTCsGwldX6dWvjr/MtpRYnwC8LcXyKkoGtJDY/arXWoOC0zB9sSggLmkg2WDrVB0Zj5amm/vKga5exdsLS1AfxhrA2cTyqtV/4hrTS4WnYYqrL9tSId79RqwQhxS3UhoCDe5l05aFCc1KhIyWAxzGE+LIFqxkZctrHNxn1dRiiGbQa7f/226jLBME9GFQuNTeLTpqBfg4Cm8bpttARni5OKLZ85mmCu+/pnNicakg3cP6AyR1K+CMkhIHb+8hu8klO+Rl7Zvizi35JtuxMUbSy/JvOdYQsR6c0L3dHTVC+kgOrfcfPjD7tqR88n3UDtzB0nMrSrYgzcm3AS2euyp6Tof5eG1tbSHMbbTev9qS8sm3yu9AkjfAGFQPmSWAjjPJzLSuqmcr50rzdrH08V1bT0jq5SnZ8pK0jTd/iuieCaXKmcIhxn9cXAhbTfXTELoLySMJThuaUz+YdCYj3SSQFrfbRxcLngivOfAy0j2qZE4nnxMeZnv4+1JnoQOENQPGOONhT4YJ77Cjk3XyZpNGOIkQyUh7a92AxAw1Eq5dCeEXM7xjnljiVzIT/HC0dkDcJAMSUlxOp2wBj5nXECGKY+I7MuDQ1w2IWzxIDuYknIGSZdwVZ/6oEIUBJxLnXNlVObWAQ1v3cMFgQf7I666YKZn08A2/CHsQ7GIc2oNYlxyHqD/bGaN47blFbBZPNg/TpxFtKaA9ihk6cuh58lF8IELhdGysb0Bct2b5TfKY7JA2KjxDnJE88q9BXIpiur6hnUEAd4SEKueLbdShOA7JHnXnyL94Tc6X+PwHmtt4fJA4CT0hhJD+MH4LsuPZw+UBMSHVsteoPel+e/Mu3YRZnXBsTxIHpkexkW1/fw6N7KAycFY6hD/AhNfo07wE1p91J4ey5tVMUvFbDARd7RnLsHTrhQWO+TJUvCXA1jc8eI3EB5Oac05YJLSnah9epevm5ub2duqTU2pecnwNjDN95235WD/8egUVE8JjCK+hZQHpUx4DQjzktMhGzcs99r4mcnb33xt/J7c4GedzmrAcwa0pyjdVPOqoz3PxYWrHlRki8BzH8d7+Qmrme+aMNPwFD2FEF2Ahu3xcDRDFQ0yI1IwNUX4xBopK52d0Q/x9ekga/dPby+wkHe9CA9HZvwVuSxmOUOUAGx4yaFcqRHyJAPoz7ala99PSLnHu2X3L0+zhyoD4UW0DggRZouEgIda6s5UeTNjcY47vX055ZZGmr3xbShb6HeBNkPyQEBUCTtbg3785yE8CVAktb7JSqpszxDEAybMDUDhzFO4n2cs2Xt/vWVOq5DlCpI7T5c4XC2O26zmThguBp4SYSZEc525VCFENog8f9fUBkh+r4bd5FnASlevV9jYvy6OEPeYKM1fTRrG+TkB9iG8diDWbzEU8ZIuGiqY39yv3M1gWdBsOkqC9XsB8LynWr2UgRKU79Kaf7omOLzenaUqE7tgFhivlW+H+waHeIDesoS9yEKNh1TNa1pQenSZ0CfphFpDLb6ULElHkouq1iBgdCFQg07scXVJ4GYJretYDqD8O9G9SC6RfSiDFlCTBoFydJC6mw4XHcc3Faqte0om1k2QPzCyccF3HgzC7rzNbRYp23SRxMpP1UICpvSVxxVtEiUdrmZdgFIxBl5ctB3G5yRgJGF+DmkmY3I6yhr64XopYjA3MmG6IwgAHMOUiC4PBg6yIoDc4JorXia7jJtt4hCVhF7orK7ikZ3pNp4u+dqB22+ma7gKO6WUsGnUTQVQkFkDp1C9jXd9lxbFNZPKDlmSUVrWOdRP8haOR+nW2673uOc5utdEaCTK93F2Il2j0obo9WOiy3fVfmB3bI8G9lsPB4Mle9ErlF7rRm9yaPbKzNcK3Z8e/1XXPL7s+A34G/Az4/w74PyINQCzkTyMRAAAAAElFTkSuQmCC';
+const LOGO = 'data:image/png;base64,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';
+document.querySelectorAll('img[data-icon]').forEach(i => i.src = ICON);
+document.querySelectorAll('img[data-logo]').forEach(i => i.src = LOGO);
+document.getElementById('favicon').href = ICON;
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ---------------------------------------------------------------
+   coggy.py — helper library copied to the board on first upload
+   (plain ASCII, no backslashes or backticks)
+   --------------------------------------------------------------- */
+const COGGY_LIB = `# coggy.py - CognoSpace Block Studio helper library
+from machine import Pin, PWM, ADC, I2C, time_pulse_us
+import time, framebuf
+
+_out = {}
+_pwm = {}
+_inp = {}
+_adc = {}
+_dht = {}
+_tp = {}
+_t0 = time.ticks_ms()
+
+def _o(n):
+    n = int(n)
+    if n in _pwm:
+        _pwm.pop(n).deinit()
+    p = _out.get(n)
+    if p is None:
+        p = _out[n] = Pin(n, Pin.OUT)
+    return p
+
+def _pw(n):
+    n = int(n)
+    w = _pwm.get(n)
+    if w is None:
+        _out.pop(n, None)
+        w = PWM(Pin(n))
+        w.freq(1000)
+        w.duty_u16(0)
+        _pwm[n] = w
+    return w
+
+def _i(n, pull=None):
+    n = int(n)
+    k = (n, pull)
+    p = _inp.get(k)
+    if p is None:
+        if pull is None:
+            p = Pin(n, Pin.IN)
+        else:
+            p = Pin(n, Pin.IN, pull)
+        _inp[k] = p
+    return p
+
+# ---------- outputs ----------
+def led(n, on):
+    _o(n).value(1 if on else 0)
+
+def toggle(n):
+    p = _o(n)
+    p.value(0 if p.value() else 1)
+
+def brightness(n, pct):
+    pct = max(0, min(100, pct))
+    _pw(n).duty_u16(int(pct * 655.35))
+
+def blink(n, times, ms):
+    for i in range(int(times)):
+        led(n, 1)
+        wait(ms)
+        led(n, 0)
+        wait(ms)
+
+def rgb(r, g, b, color):
+    color = color.lstrip('#')
+    for p, i in ((r, 0), (g, 2), (b, 4)):
+        _pw(p).duty_u16(int(color[i:i + 2], 16) * 257)
+
+def tone(n, freq, ms):
+    freq = int(freq)
+    if freq <= 0:
+        wait(ms)
+        return
+    w = _pw(n)
+    w.freq(freq)
+    w.duty_u16(32768)
+    time.sleep_ms(int(ms))
+    w.duty_u16(0)
+
+def write(n, v):
+    _o(n).value(1 if v else 0)
+
+# ---------- sensors ----------
+def dread(n):
+    return _i(n).value()
+
+def pressed(n, low=True):
+    if low:
+        return _i(n, Pin.PULL_UP).value() == 0
+    return _i(n).value() == 1
+
+def aread(n):
+    n = int(n)
+    a = _adc.get(n)
+    if a is None:
+        a = ADC(Pin(n))
+        a.atten(ADC.ATTN_11DB)
+        _adc[n] = a
+    return a.read()
+
+def percent(n):
+    return round(aread(n) * 100 / 4095)
+
+def touch(n):
+    from machine import TouchPad
+    n = int(n)
+    t = _tp.get(n)
+    if t is None:
+        t = _tp[n] = TouchPad(Pin(n))
+    return t.read()
+
+def distance(trig, echo):
+    t = _o(trig)
+    e = _i(echo)
+    t.value(0)
+    time.sleep_us(2)
+    t.value(1)
+    time.sleep_us(10)
+    t.value(0)
+    d = time_pulse_us(e, 1, 30000)
+    if d < 0:
+        return 400
+    return round(d / 58.2, 1)
+
+def _dhtread(n, kind):
+    import dht
+    n = int(n)
+    s = _dht.get(n)
+    if s is None:
+        sensor = dht.DHT22(Pin(n)) if int(kind) == 22 else dht.DHT11(Pin(n))
+        s = _dht[n] = [sensor, 0, 0, None]
+    if s[3] is None or time.ticks_diff(time.ticks_ms(), s[3]) > 1500:
+        try:
+            s[0].measure()
+            s[1] = s[0].temperature()
+            s[2] = s[0].humidity()
+        except OSError:
+            pass
+        s[3] = time.ticks_ms()
+    return s
+
+def temperature(n, kind=11):
+    return _dhtread(n, kind)[1]
+
+def humidity(n, kind=11):
+    return _dhtread(n, kind)[2]
+
+# ---------- time ----------
+def millis():
+    return time.ticks_diff(time.ticks_ms(), _t0)
+
+def wait(ms):
+    tick()
+    time.sleep_ms(int(ms))
+
+# ---------- OLED (SSD1306, I2C) ----------
+class SSD1306(framebuf.FrameBuffer):
+    def __init__(self, i2c, addr=0x3C, w=128, h=64):
+        self.i2c = i2c
+        self.addr = addr
+        self.w = w
+        self.h = h
+        self.pages = h // 8
+        self.buf = bytearray(self.pages * w)
+        super().__init__(self.buf, w, h, framebuf.MONO_VLSB)
+        self.tmp = bytearray(2)
+        self.wl = [bytearray([0x40]), None]
+        com = 0x02 if w > 2 * h else 0x12
+        for c in (0xAE, 0x20, 0x00, 0x40, 0xA1, 0xA8, h - 1, 0xC8, 0xD3, 0x00, 0xDA, com,
+                  0xD5, 0x80, 0xD9, 0xF1, 0xDB, 0x30, 0x81, 0xFF, 0xA4, 0xA6, 0x8D, 0x14, 0xAF):
+            self.cmd(c)
+
+    def cmd(self, c):
+        self.tmp[0] = 0x80
+        self.tmp[1] = c
+        self.i2c.writeto(self.addr, self.tmp)
+
+    def show(self):
+        for c in (0x21, 0, self.w - 1, 0x22, 0, self.pages - 1):
+            self.cmd(c)
+        self.wl[1] = self.buf
+        self.i2c.writevto(self.addr, self.wl)
+
+_oled = None
+_dirty = [False]
+
+def oled_setup(sda=21, scl=22, h=64):
+    global _oled
+    i2c = I2C(0, sda=Pin(int(sda)), scl=Pin(int(scl)), freq=400000)
+    addrs = i2c.scan()
+    addr = 0x3D if (0x3D in addrs and 0x3C not in addrs) else 0x3C
+    if not addrs:
+        print('OLED not found! Check SDA/SCL wires and power.')
+    _oled = SSD1306(i2c, addr, 128, int(h))
+    _oled.fill(0)
+    _oled.show()
+
+def _d():
+    if _oled is None:
+        oled_setup()
+    _dirty[0] = True
+    return _oled
+
+def tick():
+    if _oled is not None and _dirty[0]:
+        _dirty[0] = False
+        try:
+            _oled.show()
+        except OSError:
+            pass
+
+def oled_show():
+    _dirty[0] = True
+    tick()
+
+def oled_clear():
+    _d().fill(0)
+
+def oled_text(t, x, y):
+    _d().text(str(t), int(x), int(y), 1)
+
+def oled_line_text(t, line):
+    o = _d()
+    y = (int(line) - 1) * 8
+    o.fill_rect(0, y, 128, 8, 0)
+    o.text(str(t), 0, y, 1)
+
+def oled_big(t, x, y, s=2):
+    o = _d()
+    t = str(t)
+    s = int(s)
+    x = int(x)
+    y = int(y)
+    w = len(t) * 8
+    if w == 0:
+        return
+    b = bytearray(w)
+    fb = framebuf.FrameBuffer(b, w, 8, framebuf.MONO_VLSB)
+    fb.text(t, 0, 0, 1)
+    o.fill_rect(x, y, w * s, 8 * s, 0)
+    for i in range(w):
+        for j in range(8):
+            if fb.pixel(i, j):
+                o.fill_rect(x + i * s, y + j * s, s, s, 1)
+
+def oled_rect(x, y, w, h, fill=0):
+    if int(fill):
+        _d().fill_rect(int(x), int(y), int(w), int(h), 1)
+    else:
+        _d().rect(int(x), int(y), int(w), int(h), 1)
+
+def oled_line(x1, y1, x2, y2):
+    _d().line(int(x1), int(y1), int(x2), int(y2), 1)
+
+def oled_circle(x, y, r, fill=0):
+    o = _d()
+    x = int(x)
+    y = int(y)
+    r = int(r)
+    if hasattr(o, 'ellipse'):
+        o.ellipse(x, y, r, r, 1, bool(int(fill)))
+        return
+    for dy in range(-r, r + 1):
+        dx = int((r * r - dy * dy) ** 0.5)
+        if int(fill):
+            o.hline(x - dx, y + dy, 2 * dx + 1, 1)
+        else:
+            o.pixel(x - dx, y + dy, 1)
+            o.pixel(x + dx, y + dy, 1)
+
+def oled_bar(v, mx, y, h=10):
+    o = _d()
+    y = int(y)
+    mx = mx if mx else 1
+    w = int(max(0, min(1, v / mx)) * 124)
+    o.fill_rect(0, y, 128, h, 0)
+    o.rect(0, y, 128, h, 1)
+    o.fill_rect(2, y + 2, w, h - 4, 1)
+
+def oled_invert(on):
+    _d().cmd(0xA7 if on else 0xA6)
+`;
+const LIB_BYTES = new TextEncoder().encode(COGGY_LIB).length;
+
+/* ---------------------------------------------------------------
+   Block colours
+   --------------------------------------------------------------- */
+const C = { prog:'#F7931E', led:'#F59E0B', sense:'#10B981', oled:'#8B5CF6', time:'#06B6D4',
+            logic:'#3B82F6', loop:'#22C55E', math:'#F43F5E', text:'#0EA5E9', vars:'#D946EF',
+            func:'#6366F1', serial:'#64748B' };
+
+const PIN = (name, value) => ({ type:'field_number', name, value, min:0, max:39, precision:1 });
+const stmt = { previousStatement:null, nextStatement:null, inputsInline:true };
+const NOTES = [['Do (C4)','262'],['Re (D4)','294'],['Mi (E4)','330'],['Fa (F4)','349'],['So (G4)','392'],
+               ['La (A4)','440'],['Ti (B4)','494'],['Do (C5)','523'],['Beep!','1000'],['Low buzz','150']];
+const COLOURS = [['🔴 red','#FF0000'],['🟢 green','#00FF00'],['🔵 blue','#0000FF'],['🟡 yellow','#FFFF00'],
+                 ['🟠 orange','#FF5000'],['🩷 pink','#FF1470'],['🟣 purple','#8000FF'],['🩵 cyan','#00FFFF'],
+                 ['⚪ white','#FFFFFF'],['⚫ off','#000000']];
+
+Blockly.defineBlocksWithJsonArray([
+  /* ---------- Start ---------- */
+  { type:'cs_program',
+    message0:'%1 Coggy Program', args0:[{type:'field_image', src:ICON, width:30, height:30, alt:'Coggy'}],
+    message1:'▶ when Coggy starts %1', args1:[{type:'input_statement', name:'SETUP'}],
+    message2:'🔁 repeat forever %1', args2:[{type:'input_statement', name:'LOOP'}],
+    colour:C.prog, tooltip:'Your whole program lives here. "when Coggy starts" runs once, then "repeat forever" keeps looping.' },
+
+  /* ---------- LEDs & Sound ---------- */
+  { type:'cs_led', message0:'💡 turn LED on pin %1 %2',
+    args0:[PIN('PIN',2), {type:'field_dropdown', name:'STATE', options:[['ON','1'],['OFF','0']]}],
+    colour:C.led, tooltip:'Switch an LED on or off. Type the pin number your LED is connected to.', ...stmt },
+  { type:'cs_led_toggle', message0:'🔁 toggle LED on pin %1', args0:[PIN('PIN',2)],
+    colour:C.led, tooltip:'If the LED is on, turn it off — if it is off, turn it on.', ...stmt },
+  { type:'cs_led_bright', message0:'🌗 set LED on pin %1 brightness %2 %%',
+    args0:[PIN('PIN',2), {type:'input_value', name:'PCT', check:'Number'}],
+    colour:C.led, tooltip:'Dim or brighten an LED: 0 is off, 100 is full brightness.', ...stmt },
+  { type:'cs_led_blink', message0:'✨ blink LED on pin %1 %2 times, every %3 ms',
+    args0:[PIN('PIN',2), {type:'input_value', name:'TIMES', check:'Number'}, {type:'input_value', name:'MS', check:'Number'}],
+    colour:C.led, tooltip:'Blink an LED a few times. 1000 ms = 1 second.', ...stmt },
+  { type:'cs_rgb', message0:'🌈 RGB LED  R pin %1 G pin %2 B pin %3 show %4',
+    args0:[PIN('RPIN',16), PIN('GPIN',17), PIN('BPIN',19), {type:'field_dropdown', name:'COL', options:COLOURS}],
+    colour:C.led, tooltip:'Light up an RGB LED in any colour.', ...stmt },
+  { type:'cs_tone', message0:'🎵 buzzer on pin %1 play %2 for %3 ms',
+    args0:[PIN('PIN',23), {type:'field_dropdown', name:'NOTE', options:NOTES}, {type:'input_value', name:'MS', check:'Number'}],
+    colour:C.led, tooltip:'Play a musical note on a buzzer.', ...stmt },
+  { type:'cs_write', message0:'⚡ set pin %1 to %2',
+    args0:[PIN('PIN',4), {type:'field_dropdown', name:'V', options:[['HIGH','1'],['LOW','0']]}],
+    colour:C.led, tooltip:'Turn any pin HIGH (on) or LOW (off) — for relays, motors, fans…', ...stmt },
+
+  /* ---------- Sensors ---------- */
+  { type:'cs_button', message0:'🔘 button on pin %1 is pressed? %2',
+    args0:[PIN('PIN',13), {type:'field_dropdown', name:'WIRE', options:[['(wired to GND)','LOW'],['(button module)','HIGH']]}],
+    output:'Boolean', colour:C.sense, inputsInline:true, tooltip:'True while the button is being pressed.' },
+  { type:'cs_ultra', message0:'📏 distance in cm  trig pin %1 echo pin %2', args0:[PIN('TRIGPIN',5), PIN('ECHOPIN',18)],
+    output:'Number', colour:C.sense, inputsInline:true, tooltip:'Ultrasonic sensor (HC-SR04). Gives distance in centimetres.' },
+  { type:'cs_dht', message0:'🌡️ %1 from %2 on pin %3',
+    args0:[{type:'field_dropdown', name:'WHAT', options:[['temperature °C','T'],['humidity %','H']]},
+           {type:'field_dropdown', name:'KIND', options:[['DHT11','11'],['DHT22','22']]}, PIN('PIN',4)],
+    output:'Number', colour:C.sense, inputsInline:true, tooltip:'Read temperature or humidity from a DHT sensor.' },
+  { type:'cs_level', message0:'%1 level on pin %2 (0–100)',
+    args0:[{type:'field_dropdown', name:'WHAT', options:[['☀️ light','L'],['🎚️ knob','K'],['🌱 soil moisture','S'],['💨 gas','G'],['📶 sensor','X']]}, PIN('PIN',34)],
+    output:'Number', colour:C.sense, inputsInline:true, tooltip:'Read an analog sensor as a percentage from 0 to 100.' },
+  { type:'cs_detect', message0:'👀 %1 on pin %2 detects something?',
+    args0:[{type:'field_dropdown', name:'KIND', options:[['IR sensor','IR'],['PIR motion sensor','PIR']]}, PIN('PIN',14)],
+    output:'Boolean', colour:C.sense, inputsInline:true, tooltip:'True when the IR sensor sees an object or the PIR sees movement.' },
+  { type:'cs_aread', message0:'📈 analog read pin %1 (0–4095)', args0:[PIN('PIN',34)],
+    output:'Number', colour:C.sense, inputsInline:true, tooltip:'Raw analog value between 0 and 4095.' },
+  { type:'cs_dread', message0:'🔢 digital read pin %1 (0 or 1)', args0:[PIN('PIN',14)],
+    output:'Number', colour:C.sense, inputsInline:true, tooltip:'Read a pin: 1 means HIGH, 0 means LOW.' },
+  { type:'cs_touch', message0:'👆 touch value on pin %1', args0:[PIN('PIN',32)],
+    output:'Number', colour:C.sense, inputsInline:true, tooltip:'Touch sensing. The number gets smaller when you touch the wire.' },
+
+  /* ---------- OLED ---------- */
+  { type:'cs_oled_setup', message0:'🖥️ set up OLED 128 × %1  SDA pin %2 SCL pin %3',
+    args0:[{type:'field_dropdown', name:'H', options:[['64','64'],['32','32']]}, PIN('SDAPIN',21), PIN('SCLPIN',22)],
+    colour:C.oled, tooltip:'Start the OLED screen. Put this in "when Coggy starts".', ...stmt },
+  { type:'cs_oled_clear', message0:'🧽 clear OLED screen', colour:C.oled, tooltip:'Wipe the screen blank.', ...stmt },
+  { type:'cs_oled_line', message0:'✏️ OLED write %1 on line %2',
+    args0:[{type:'input_value', name:'TEXT'}, {type:'field_number', name:'LINE', value:1, min:1, max:8, precision:1}],
+    colour:C.oled, tooltip:'Write text on a line (1 to 8). The old text on that line is erased.', ...stmt },
+  { type:'cs_oled_text', message0:'📝 OLED write %1 at x %2 y %3',
+    args0:[{type:'input_value', name:'TEXT'}, {type:'input_value', name:'X', check:'Number'}, {type:'input_value', name:'Y', check:'Number'}],
+    colour:C.oled, tooltip:'Write text anywhere. x goes 0–127 (left→right), y goes 0–63 (top→bottom).', ...stmt },
+  { type:'cs_oled_big', message0:'🔠 OLED BIG %1 at x %2 y %3 size %4',
+    args0:[{type:'input_value', name:'TEXT'}, {type:'input_value', name:'X', check:'Number'}, {type:'input_value', name:'Y', check:'Number'},
+           {type:'field_dropdown', name:'S', options:[['2×','2'],['3×','3'],['4×','4']]}],
+    colour:C.oled, tooltip:'Big text — great for numbers like temperature or distance.', ...stmt },
+  { type:'cs_oled_rect', message0:'⬛ OLED box x %1 y %2 width %3 height %4 %5',
+    args0:[{type:'input_value', name:'X', check:'Number'}, {type:'input_value', name:'Y', check:'Number'},
+           {type:'input_value', name:'W', check:'Number'}, {type:'input_value', name:'H', check:'Number'},
+           {type:'field_dropdown', name:'FILL', options:[['outline','0'],['filled','1']]}],
+    colour:C.oled, tooltip:'Draw a rectangle.', ...stmt },
+  { type:'cs_oled_circle', message0:'⚪ OLED circle x %1 y %2 radius %3 %4',
+    args0:[{type:'input_value', name:'X', check:'Number'}, {type:'input_value', name:'Y', check:'Number'},
+           {type:'input_value', name:'R', check:'Number'}, {type:'field_dropdown', name:'FILL', options:[['outline','0'],['filled','1']]}],
+    colour:C.oled, tooltip:'Draw a circle.', ...stmt },
+  { type:'cs_oled_lineto', message0:'📐 OLED line from x %1 y %2 to x %3 y %4',
+    args0:[{type:'input_value', name:'X1', check:'Number'}, {type:'input_value', name:'Y1', check:'Number'},
+           {type:'input_value', name:'X2', check:'Number'}, {type:'input_value', name:'Y2', check:'Number'}],
+    colour:C.oled, tooltip:'Draw a straight line.', ...stmt },
+  { type:'cs_oled_bar', message0:'📊 OLED bar graph %1 out of %2 at y %3',
+    args0:[{type:'input_value', name:'V', check:'Number'}, {type:'input_value', name:'MAX', check:'Number'}, {type:'input_value', name:'Y', check:'Number'}],
+    colour:C.oled, tooltip:'Show a value as a filling bar, like a battery meter.', ...stmt },
+  { type:'cs_oled_invert', message0:'🌓 OLED colours %1',
+    args0:[{type:'field_dropdown', name:'INV', options:[['normal','0'],['inverted','1']]}],
+    colour:C.oled, tooltip:'Swap black and white on the screen.', ...stmt },
+  { type:'cs_oled_show', message0:'🔄 refresh OLED now', colour:C.oled,
+    tooltip:'The screen refreshes by itself at every "wait" and loop. Use this to refresh right away.', ...stmt },
+
+  /* ---------- Time ---------- */
+  { type:'cs_wait', message0:'⏱️ wait %1 %2',
+    args0:[{type:'input_value', name:'T', check:'Number'}, {type:'field_dropdown', name:'UNIT', options:[['seconds','S'],['milliseconds','MS']]}],
+    colour:C.time, tooltip:'Pause the program for a little while.', ...stmt },
+  { type:'cs_millis', message0:'⏲️ milliseconds since start', output:'Number', colour:C.time,
+    tooltip:'How long Coggy has been running. 1000 ms = 1 second.' },
+
+  /* ---------- Serial ---------- */
+  { type:'cs_print', message0:'🖨️ print %1 on Monitor', args0:[{type:'input_value', name:'TEXT'}],
+    colour:C.serial, tooltip:'Send a message to the Monitor tab on this page.', ...stmt },
+]);
+
+/* ---------------------------------------------------------------
+   MicroPython generators
+   --------------------------------------------------------------- */
+const G = python.pythonGenerator, O = python.Order;
+G.INDENT = '    ';
+const fv = (b, n) => b.getFieldValue(n);
+const vv = (b, n, d = '0', o = O.NONE) => G.valueToCode(b, n, o) || d;
+const def = (type, fn) => { G.forBlock[type] = function (b, g) { g.definitions_['import_coggy'] = 'from coggy import *'; return fn(b, g); }; };
+const call = c => [c, O.FUNCTION_CALL];
+const msOf = (b, n) => { const t = vv(b, n, '1', O.MULTIPLICATIVE); return /^\d+(\.\d+)?$/.test(t) ? String(Math.round(parseFloat(t) * 1000)) : `${t} * 1000`; };
+
+def('cs_program', b => {
+  const setup = G.statementToCode(b, 'SETUP').replace(/^ {4}/gm, '');
+  const loop = G.statementToCode(b, 'LOOP');
+  return `# ===== runs once when Coggy starts =====\n${setup}tick()\n\n# ===== repeats forever =====\nwhile True:\n${loop}${G.INDENT}tick()\n`;
+});
+def('cs_led',        b => `led(${fv(b,'PIN')}, ${fv(b,'STATE')})\n`);
+def('cs_led_toggle', b => `toggle(${fv(b,'PIN')})\n`);
+def('cs_led_bright', b => `brightness(${fv(b,'PIN')}, ${vv(b,'PCT','100')})\n`);
+def('cs_led_blink',  b => `blink(${fv(b,'PIN')}, ${vv(b,'TIMES','3')}, ${vv(b,'MS','200')})\n`);
+def('cs_rgb',        b => `rgb(${fv(b,'RPIN')}, ${fv(b,'GPIN')}, ${fv(b,'BPIN')}, '${fv(b,'COL')}')\n`);
+def('cs_tone',       b => `tone(${fv(b,'PIN')}, ${fv(b,'NOTE')}, ${vv(b,'MS','300')})\n`);
+def('cs_write',      b => `write(${fv(b,'PIN')}, ${fv(b,'V')})\n`);
+def('cs_button',     b => call(fv(b,'WIRE') === 'LOW' ? `pressed(${fv(b,'PIN')})` : `pressed(${fv(b,'PIN')}, False)`));
+def('cs_ultra',      b => call(`distance(${fv(b,'TRIGPIN')}, ${fv(b,'ECHOPIN')})`));
+def('cs_dht',        b => call(`${fv(b,'WHAT') === 'T' ? 'temperature' : 'humidity'}(${fv(b,'PIN')}, ${fv(b,'KIND')})`));
+def('cs_level',      b => call(`percent(${fv(b,'PIN')})`));
+def('cs_detect',     b => [`(dread(${fv(b,'PIN')}) == ${fv(b,'KIND') === 'IR' ? 0 : 1})`, O.ATOMIC]);
+def('cs_aread',      b => call(`aread(${fv(b,'PIN')})`));
+def('cs_dread',      b => call(`dread(${fv(b,'PIN')})`));
+def('cs_touch',      b => call(`touch(${fv(b,'PIN')})`));
+def('cs_oled_setup', b => `oled_setup(${fv(b,'SDAPIN')}, ${fv(b,'SCLPIN')}, ${fv(b,'H')})\n`);
+def('cs_oled_clear', () => `oled_clear()\n`);
+def('cs_oled_line',  b => `oled_line_text(${vv(b,'TEXT',"''")}, ${fv(b,'LINE')})\n`);
+def('cs_oled_text',  b => `oled_text(${vv(b,'TEXT',"''")}, ${vv(b,'X')}, ${vv(b,'Y')})\n`);
+def('cs_oled_big',   b => `oled_big(${vv(b,'TEXT',"''")}, ${vv(b,'X')}, ${vv(b,'Y')}, ${fv(b,'S')})\n`);
+def('cs_oled_rect',  b => `oled_rect(${vv(b,'X')}, ${vv(b,'Y')}, ${vv(b,'W','10')}, ${vv(b,'H','10')}, ${fv(b,'FILL')})\n`);
+def('cs_oled_circle',b => `oled_circle(${vv(b,'X')}, ${vv(b,'Y')}, ${vv(b,'R','10')}, ${fv(b,'FILL')})\n`);
+def('cs_oled_lineto',b => `oled_line(${vv(b,'X1')}, ${vv(b,'Y1')}, ${vv(b,'X2')}, ${vv(b,'Y2')})\n`);
+def('cs_oled_bar',   b => `oled_bar(${vv(b,'V')}, ${vv(b,'MAX','100')}, ${vv(b,'Y','54')})\n`);
+def('cs_oled_invert',b => `oled_invert(${fv(b,'INV')})\n`);
+def('cs_oled_show',  () => `oled_show()\n`);
+def('cs_wait',       b => fv(b,'UNIT') === 'MS' ? `wait(${vv(b,'T','0')})\n` : `wait(${msOf(b,'T')})\n`);
+def('cs_millis',     () => call('millis()'));
+def('cs_print',      b => `print(${vv(b,'TEXT',"''")})\n`);
+// MicroPython has no "numbers" module, so keep "change by" simple
+G.forBlock['math_change'] = function (b, g) {
+  const v = g.getVariableName(b.getFieldValue('VAR'));
+  return `${v} = ${v} + ${g.valueToCode(b,'DELTA',O.ADDITIVE) || '0'}\n`;
+};
+
+/* ---------------------------------------------------------------
+   Theme + toolbox
+   --------------------------------------------------------------- */
+const theme = Blockly.Theme.defineTheme('cognospace', {
+  base: Blockly.Themes.Classic,
+  blockStyles: {
+    logic_blocks:{colourPrimary:C.logic}, loop_blocks:{colourPrimary:C.loop}, math_blocks:{colourPrimary:C.math},
+    text_blocks:{colourPrimary:C.text}, variable_blocks:{colourPrimary:C.vars}, variable_dynamic_blocks:{colourPrimary:C.vars},
+    procedure_blocks:{colourPrimary:C.func}, list_blocks:{colourPrimary:'#14B8A6'}
+  },
+  categoryStyles: { variable_category:{colour:C.vars}, procedure_category:{colour:C.func} },
+  componentStyles: {
+    workspaceBackgroundColour:'#FFFDF9', toolboxBackgroundColour:'#FFFFFF', toolboxForegroundColour:'#444',
+    flyoutBackgroundColour:'#FFF4E6', flyoutForegroundColour:'#444', flyoutOpacity:1,
+    scrollbarColour:'#F7C58A', scrollbarOpacity:0.8, insertionMarkerColour:'#F7931E', insertionMarkerOpacity:0.35,
+    cursorColour:'#F7931E'
+  },
+  fontStyle: { family:'Nunito, sans-serif', weight:'800', size:12 },
+  startHats: true
+});
+
+const N = n => ({ shadow:{ type:'math_number', fields:{ NUM:n } } });
+const T = t => ({ shadow:{ type:'text', fields:{ TEXT:t } } });
+const B = (type, inputs) => inputs ? { kind:'block', type, inputs } : { kind:'block', type };
+const label = text => ({ kind:'label', text });
+const toolbox = { kind:'categoryToolbox', contents: [
+  { kind:'category', name:'🚀 Start', colour:C.prog, contents:[ B('cs_program') ] },
+  { kind:'category', name:'💡 LEDs & Sound', colour:C.led, contents:[
+    label('Type the pin number where your part is connected'),
+    B('cs_led'), B('cs_led_toggle'), B('cs_led_bright',{PCT:N(50)}), B('cs_led_blink',{TIMES:N(3),MS:N(200)}),
+    B('cs_rgb'), B('cs_tone',{MS:N(300)}), B('cs_write') ]},
+  { kind:'category', name:'📡 Sensors', colour:C.sense, contents:[
+    B('cs_button'), B('cs_ultra'), B('cs_dht'), B('cs_level'), B('cs_detect'), B('cs_aread'), B('cs_dread'), B('cs_touch') ]},
+  { kind:'category', name:'🖥️ OLED Display', colour:C.oled, contents:[
+    B('cs_oled_setup'), B('cs_oled_clear'),
+    B('cs_oled_line',{TEXT:T('Hello Coggy!')}), B('cs_oled_text',{TEXT:T('Hi!'),X:N(0),Y:N(0)}),
+    B('cs_oled_big',{TEXT:T('25'),X:N(0),Y:N(20)}),
+    B('cs_oled_rect',{X:N(0),Y:N(0),W:N(128),H:N(64)}), B('cs_oled_circle',{X:N(64),Y:N(32),R:N(15)}),
+    B('cs_oled_lineto',{X1:N(0),Y1:N(0),X2:N(127),Y2:N(63)}), B('cs_oled_bar',{V:N(50),MAX:N(100),Y:N(54)}),
+    B('cs_oled_invert'), B('cs_oled_show') ]},
+  { kind:'category', name:'⏱️ Time', colour:C.time, contents:[ B('cs_wait',{T:N(1)}), B('cs_millis') ]},
+  { kind:'sep' },
+  { kind:'category', name:'🔀 Logic', colour:C.logic, contents:[
+    B('controls_if'), { kind:'block', type:'controls_if', extraState:{ hasElse:true } },
+    B('logic_compare',{A:N(0),B:N(0)}), B('logic_operation'), B('logic_negate'), B('logic_boolean') ]},
+  { kind:'category', name:'🔁 Loops', colour:C.loop, contents:[
+    B('controls_repeat_ext',{TIMES:N(5)}), B('controls_whileUntil'),
+    B('controls_for',{FROM:N(1),TO:N(10),BY:N(1)}), B('controls_flow_statements') ]},
+  { kind:'category', name:'🔢 Math', colour:C.math, contents:[
+    B('math_number'), B('math_arithmetic',{A:N(1),B:N(1)}), B('math_random_int',{FROM:N(1),TO:N(10)}),
+    B('math_modulo',{DIVIDEND:N(10),DIVISOR:N(3)}), B('math_round',{NUM:N(3.5)}),
+    B('math_constrain',{VALUE:N(50),LOW:N(0),HIGH:N(100)}) ]},
+  { kind:'category', name:'🔤 Text', colour:C.text, contents:[ B('text'), B('text_join'), B('text_length',{VALUE:T('Coggy')}) ]},
+  { kind:'category', name:'📦 Variables', categorystyle:'variable_category', custom:'VARIABLE' },
+  { kind:'category', name:'🧩 Functions', categorystyle:'procedure_category', custom:'PROCEDURE' },
+  { kind:'category', name:'📟 Monitor', colour:C.serial, contents:[ B('cs_print',{TEXT:T('Hello from Coggy!')}) ]},
+]};
+
+const ws = Blockly.inject('blocklyDiv', {
+  toolbox, theme, renderer:'zelos',
+  media:'https://unpkg.com/blockly@12.5.1/media/',
+  grid:{ spacing:28, length:4, colour:'#F4E6D4', snap:true },
+  zoom:{ controls:true, wheel:true, startScale:0.85, maxScale:2, minScale:0.4, scaleSpeed:1.15 },
+  trashcan:true, move:{ scrollbars:true, drag:true, wheel:false }, sounds:true
+});
+ws.addChangeListener(Blockly.Events.disableOrphans);
+new ResizeObserver(() => Blockly.svgResize(ws)).observe($('#blocklyWrap'));
+
+/* ---------------------------------------------------------------
+   Pin checks — friendly warnings on blocks
+   --------------------------------------------------------------- */
+const VALID = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,21,22,23,25,26,27,32,33,34,35,36,39]);
+const ADC_PINS = new Set([0,2,4,12,13,14,15,25,26,27,32,33,34,35,36,39]);
+const TOUCH_PINS = new Set([0,2,4,12,13,14,15,27,32,33]);
+const OUT_TYPES = new Set(['cs_led','cs_led_toggle','cs_led_bright','cs_led_blink','cs_rgb','cs_tone','cs_write','cs_oled_setup']);
+function lint() {
+  for (const b of ws.getAllBlocks(false)) {
+    if (!b.type.startsWith('cs_') || b.type === 'cs_program') continue;
+    const msgs = [];
+    for (const inp of b.inputList) for (const fd of inp.fieldRow) {
+      if (!fd.name || !/PIN$/.test(fd.name)) continue;
+      const p = Number(fd.getValue());
+      if (!VALID.has(p)) msgs.push(`Pin ${p} doesn't exist on Coggy. Check the Pins tab.`);
+      else if (p >= 6 && p <= 11) msgs.push(`Pin ${p} is used by Coggy's memory chip — please pick another pin.`);
+      else if (p === 1 || p === 3) msgs.push(`Pin ${p} is used by the USB cable connection.`);
+      else if ((OUT_TYPES.has(b.type) || fd.name === 'TRIGPIN') && p >= 34) msgs.push(`Pin ${p} can only read sensors — it can't power an LED, buzzer or OLED.`);
+      else if ((b.type === 'cs_aread' || b.type === 'cs_level') && !ADC_PINS.has(p)) msgs.push(`Pin ${p} can't read analog sensors. Try 32, 33, 34, 35, 36 or 39.`);
+      else if (b.type === 'cs_touch' && !TOUCH_PINS.has(p)) msgs.push(`Pin ${p} is not a touch pin. Try 4, 13, 14, 15, 27, 32 or 33.`);
+    }
+    b.setWarningText(msgs.length ? msgs.join('\n') : null);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Code generation + display
+   --------------------------------------------------------------- */
+let lastCode = '';
+function generate() {
+  const progs = ws.getBlocksByType('cs_program', false);
+  let code = G.workspaceToCode(ws).trim();
+  const header = `# ${$('#projName').value || 'My Coggy Project'}\n# Made with CognoSpace Block Studio\n`;
+  if (!progs.length) code = '# 👉 Drag the "Coggy Program" block from 🚀 Start to begin!';
+  if (!code.includes('from coggy import *')) code = 'from coggy import *\n' + code;
+  code = code.replace(/\n{3,}/g, '\n\n');
+  return { code: header + code + '\n', ok: progs.length > 0, many: progs.length > 1 };
+}
+function hl(src) {
+  const re = /(#[^\n]*)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|\b(def|while|if|elif|else|for|in|range|return|import|from|True|False|None|and|or|not|global|break|continue|pass)\b|\b(\d+(?:\.\d+)?)\b|\b([A-Za-z_]\w*)(?=\()/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    const cls = m[1] ? 'c' : m[2] ? 's' : m[3] ? 'k' : m[4] ? 'n' : 'f';
+    out += `<span class="${cls}">${esc(m[0])}</span>`;
+    last = re.lastIndex;
+  }
+  return out + esc(src.slice(last));
+}
+function refresh() {
+  lint();
+  const { code } = generate();
+  lastCode = code;
+  $('#code').innerHTML = code.replace(/\n$/, '').split('\n').map(l => `<span class="l">${hl(l) || ' '}</span>`).join('');
+  const n = ws.getAllBlocks(false).length;
+  $('#blockCount').textContent = `🧩 ${n} block${n === 1 ? '' : 's'}`;
+}
+let saveTimer;
+ws.addChangeListener(e => {
+  if (e.isUiEvent) return;
+  refresh();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autosave, 600);
+});
+
+/* ---------------------------------------------------------------
+   Examples (built as Blockly XML)
+   --------------------------------------------------------------- */
+const F = (n, v) => `<field name="${n}">${v}</field>`;
+const Vn = (name, n) => `<value name="${name}"><shadow type="math_number"><field name="NUM">${n}</field></shadow></value>`;
+const Vt = (name, t) => `<value name="${name}"><shadow type="text"><field name="TEXT">${t}</field></shadow></value>`;
+const Vb = (name, block) => `<value name="${name}">${block}</value>`;
+const blk = (type, inner = '') => ({ type, inner });
+function seq(...bs) { if (!bs.length) return ''; const [h, ...r] = bs; return `<block type="${h.type}">${h.inner}${r.length ? `<next>${seq(...r)}</next>` : ''}</block>`; }
+const one = (type, inner = '') => `<block type="${type}">${inner}</block>`;
+const join2 = (a, b) => `<block type="text_join"><mutation items="2"></mutation>${a}${b}</block>`;
+const prog = (setup, loop, vars = '') => `<xml>${vars}<block type="cs_program" x="40" y="40"><statement name="SETUP">${seq(...setup)}</statement><statement name="LOOP">${seq(...loop)}</statement></block></xml>`;
+const ledB = (p, s) => blk('cs_led', F('PIN', p) + F('STATE', s));
+const waitS = s => blk('cs_wait', Vn('T', s) + F('UNIT', 'S'));
+const lineB = (text, line) => blk('cs_oled_line', text + F('LINE', line));
+
+const EXAMPLES = [
+  { emo:'💡', title:'Blink', level:'Beginner', bg:'#FFF4D6', desc:'Make the little LED on Coggy blink on and off.', parts:'Just Coggy! (LED on pin 2)',
+    xml: prog([], [ ledB(2,1), waitS(0.5), ledB(2,0), waitS(0.5) ]) },
+  { emo:'🚦', title:'Traffic Light', level:'Beginner', bg:'#E8FBF3', desc:'Red, yellow, green — just like the road signal.', parts:'LEDs: R 25 · Y 26 · G 27',
+    xml: prog([], [ ledB(25,1), waitS(3), ledB(25,0), ledB(26,1), waitS(1), ledB(26,0), ledB(27,1), waitS(3), ledB(27,0) ]) },
+  { emo:'👋', title:'Hello OLED', level:'Beginner', bg:'#F3EEFF', desc:'Write your name and draw shapes on the OLED screen.', parts:'OLED: SDA 21 · SCL 22',
+    xml: prog([ blk('cs_oled_setup', F('H',64)+F('SDAPIN',21)+F('SCLPIN',22)) ],
+              [ blk('cs_oled_clear'), lineB(Vt('TEXT','Hello, I am'),1),
+                blk('cs_oled_big', Vt('TEXT','COGGY')+Vn('X',4)+Vn('Y',16)+F('S',3)),
+                blk('cs_oled_circle', Vn('X',20)+Vn('Y',52)+Vn('R',8)+F('FILL',1)),
+                blk('cs_oled_rect', Vn('X',40)+Vn('Y',46)+Vn('W',80)+Vn('H',14)+F('FILL',0)),
+                waitS(1), blk('cs_oled_invert', F('INV',1)), waitS(0.3), blk('cs_oled_invert', F('INV',0)), waitS(1) ]) },
+  { emo:'📏', title:'Distance Meter', level:'Explorer', bg:'#E0F2FE', desc:'Measure how far things are and show it BIG on the OLED.', parts:'Ultrasonic: TRIG 5 · ECHO 18 + OLED',
+    xml: prog([ blk('cs_oled_setup', F('H',64)+F('SDAPIN',21)+F('SCLPIN',22)) ],
+              [ blk('cs_oled_clear'), lineB(Vt('TEXT','Distance (cm)'),1),
+                blk('cs_oled_big', Vb('TEXT', one('cs_ultra', F('TRIGPIN',5)+F('ECHOPIN',18)))+Vn('X',0)+Vn('Y',18)+F('S',3)),
+                blk('cs_oled_bar', Vb('V', one('cs_ultra', F('TRIGPIN',5)+F('ECHOPIN',18)))+Vn('MAX',100)+Vn('Y',52)),
+                waitS(0.2) ]) },
+  { emo:'🌡️', title:'Weather Station', level:'Explorer', bg:'#FFE4EF', desc:'Show temperature and humidity on the OLED.', parts:'DHT11: pin 4 + OLED',
+    xml: prog([ blk('cs_oled_setup', F('H',64)+F('SDAPIN',21)+F('SCLPIN',22)) ],
+              [ blk('cs_oled_clear'), lineB(Vt('TEXT','Weather Station'),1),
+                lineB(Vb('TEXT', join2(Vt('ADD0','Temp: '), Vb('ADD1', one('cs_dht', F('WHAT','T')+F('KIND','11')+F('PIN',4))))),3),
+                lineB(Vb('TEXT', join2(Vt('ADD0','Humidity: '), Vb('ADD1', one('cs_dht', F('WHAT','H')+F('KIND','11')+F('PIN',4))))),5),
+                blk('cs_print', Vb('TEXT', one('cs_dht', F('WHAT','T')+F('KIND','11')+F('PIN',4)))),
+                waitS(2) ]) },
+  { emo:'🌙', title:'Smart Night Light', level:'Explorer', bg:'#FFF4D6', desc:'The LED turns on by itself when it gets dark.', parts:'LDR: pin 34 · LED: pin 2',
+    xml: prog([], [
+      { type:'controls_if', inner:`<mutation else="1"></mutation><value name="IF0"><block type="logic_compare">${F('OP','LT')}${Vb('A', one('cs_level', F('WHAT','L')+F('PIN',34)))}${Vn('B',30)}</block></value><statement name="DO0">${seq(ledB(2,1))}</statement><statement name="ELSE">${seq(ledB(2,0))}</statement>` },
+      blk('cs_print', Vb('TEXT', one('cs_level', F('WHAT','L')+F('PIN',34)))), waitS(0.3) ]) },
+  { emo:'🔘', title:'Button Counter', level:'Champion', bg:'#E8FBF3', desc:'Count button presses with a variable and a beep!', parts:'Button 13 · Buzzer 23 · OLED',
+    xml: prog([ blk('variables_set', `<field name="VAR" id="vcount">count</field>`+Vn('VALUE',0)),
+                blk('cs_oled_setup', F('H',64)+F('SDAPIN',21)+F('SCLPIN',22)), lineB(Vt('TEXT','Presses:'),1) ],
+              [ { type:'controls_if', inner:`<value name="IF0">${one('cs_button', F('PIN',13)+F('WIRE','LOW'))}</value><statement name="DO0">${seq(
+                    blk('math_change', `<field name="VAR" id="vcount">count</field>`+Vn('DELTA',1)),
+                    blk('cs_tone', F('PIN',23)+F('NOTE','523')+Vn('MS',100)), blk('cs_led_toggle', F('PIN',2)),
+                    blk('cs_oled_big', Vb('TEXT', `<block type="variables_get"><field name="VAR" id="vcount">count</field></block>`)+Vn('X',30)+Vn('Y',20)+F('S',4)),
+                    waitS(0.25))}</statement>` },
+                blk('cs_wait', Vn('T',20)+F('UNIT','MS')) ],
+              `<variables><variable id="vcount">count</variable></variables>`) },
+  { emo:'🌈', title:'Rainbow Party', level:'Champion', bg:'#FFE4EF', desc:'Cycle an RGB LED through colours and play music.', parts:'RGB: 16 · 17 · 19 · Buzzer 23',
+    xml: prog([], ['#FF0000:262','#FF5000:294','#FFFF00:330','#00FF00:349','#00FFFF:392','#0000FF:440','#8000FF:494'].flatMap(s => {
+      const [c, n] = s.split(':');
+      return [ blk('cs_rgb', F('RPIN',16)+F('GPIN',17)+F('BPIN',19)+F('COL',c)), blk('cs_tone', F('PIN',23)+F('NOTE',n)+Vn('MS',250)) ];
+    })) },
+];
+
+function loadXml(xml) {
+  ws.clear();
+  Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xml), ws);
+  ws.scrollCenter();
+}
+function buildExamples() {
+  const grid = $('#exGrid');
+  EXAMPLES.forEach(ex => {
+    const card = document.createElement('button');
+    card.className = 'exCard';
+    card.style.background = ex.bg;
+    card.innerHTML = `<div class="emo">${ex.emo}</div><h3>${ex.title}<span class="lvl">${ex.level}</span></h3><p>${ex.desc}</p><span class="parts">🔧 ${ex.parts}</span>`;
+    card.onclick = () => {
+      if (ws.getAllBlocks(false).length > 1 && !confirm(`Load "${ex.title}"? Your current blocks will be replaced.\n(Tip: click Save first to keep them.)`)) return;
+      loadXml(ex.xml);
+      $('#projName').value = ex.title;
+      closeAll();
+      toast(`${ex.emo} Loaded "${ex.title}" — check the wiring, then Upload!`, 'ok');
+    };
+    grid.appendChild(card);
+  });
+}
+
+/* ---------------------------------------------------------------
+   Save / open / autosave
+   --------------------------------------------------------------- */
+const LS_KEY = 'cognospace_blockstudio_v1';
+function snapshot() { return { app:'CognoSpace Block Studio', name:$('#projName').value, blocks:Blockly.serialization.workspaces.save(ws) }; }
+function autosave() { try { localStorage.setItem(LS_KEY, JSON.stringify(snapshot())); } catch (e) {} }
+function restore(data) {
+  ws.clear();
+  Blockly.serialization.workspaces.load(data.blocks, ws);
+  if (data.name) $('#projName').value = data.name;
+}
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const safeName = () => ($('#projName').value || 'coggy-project').trim().replace(/[^\w\- ]+/g, '').replace(/\s+/g, '-') || 'coggy-project';
+$('#btnSave').onclick = () => { download(safeName() + '.coggy.json', JSON.stringify(snapshot(), null, 1), 'application/json'); toast('💾 Project saved to your Downloads', 'ok'); };
+$('#btnOpen').onclick = () => $('#fileOpen').click();
+$('#fileOpen').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { restore(JSON.parse(await f.text())); toast(`📂 Opened "${$('#projName').value}"`, 'ok'); }
+  catch (err) { toast('😕 That file is not a Block Studio project', 'bad'); }
+  e.target.value = '';
+};
+$('#btnNew').onclick = () => {
+  if (ws.getAllBlocks(false).length > 1 && !confirm('Start a new project? Unsaved blocks will be cleared.')) return;
+  loadXml(prog([], []));
+  $('#projName').value = 'My Coggy Project';
+};
+$('#projName').oninput = () => { refresh(); autosave(); };
+$('#btnCopy').onclick = async () => { try { await navigator.clipboard.writeText(lastCode); toast('📋 Code copied!', 'ok'); } catch (e) { toast('Could not copy', 'bad'); } };
+$('#btnDlPy').onclick = () => download('main.py', lastCode, 'text/x-python');
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); $('#btnSave').click(); } });
+
+/* ---------------------------------------------------------------
+   UI helpers
+   --------------------------------------------------------------- */
+function toast(msg, kind = '') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + kind; t.textContent = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+function openOv(id) { try { Blockly.hideChaff(); } catch (e) {} $(id).classList.add('show'); }
+function closeAll() { document.querySelectorAll('.overlay').forEach(o => { if (o.id !== 'progress') o.classList.remove('show'); }); }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => {
+  if ($('#noWelcome').checked) try { localStorage.setItem(LS_KEY + '_nowelcome', '1'); } catch (e) {}
+  closeAll();
+});
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o && o.id !== 'progress') closeAll(); }));
+$('#btnExamples').onclick = () => openOv('#examples');
+$('#welcomeExamples').onclick = () => { closeAll(); openOv('#examples'); };
+$('#btnHelp').onclick = () => openOv('#welcome');
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p.id === id));
+  if (id === 'monPane') $('#monBadge').classList.remove('show');
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
+$('#panelToggle').onclick = () => {
+  const c = $('#side').classList.toggle('collapsed');
+  $('#panelToggle').classList.toggle('c', c);
+  $('#panelToggle').textContent = c ? '‹' : '›';
+};
+function message(emoji, title, html, kind) {
+  $('#msgBody').innerHTML = `<div class="big">${emoji}</div><h3>${title}</h3><div style="color:#555;font-size:14.5px;line-height:1.55;text-align:left">${html}</div>
+    <div style="margin-top:18px"><button class="btn ${kind === 'ok' ? 'upload' : ''}" data-close2>OK</button></div>`;
+  $('#msgBody').querySelector('[data-close2]').onclick = closeAll;
+  openOv('#message');
+}
+
+/* ---------------------------------------------------------------
+   Monitor
+   --------------------------------------------------------------- */
+let monText = '', monQueued = false;
+function monAppend(s) {
+  monText += s.replace(/\r/g, '');
+  if (monText.length > 30000) monText = monText.slice(-24000);
+  if (!$('#monPane').classList.contains('active')) $('#monBadge').classList.add('show');
+  if (!monQueued) { monQueued = true; requestAnimationFrame(renderMon); }
+}
+function renderMon() {
+  monQueued = false;
+  const m = $('#monitor');
+  const atBottom = m.scrollHeight - m.scrollTop - m.clientHeight < 40;
+  m.innerHTML = monText.split('\n').map(l => {
+    if (/Traceback|Error|Exception|not found/i.test(l)) return `<span class="err">${esc(l)}</span>`;
+    if (/^(>>>|MicroPython|Type "help|MPY:|soft reboot|rst:|ets |boot:|load:|entry )/.test(l)) return `<span class="sys">${esc(l)}</span>`;
+    return esc(l);
+  }).join('\n');
+  $('#monEmpty').style.display = monText ? 'none' : 'flex';
+  if (atBottom) m.scrollTop = m.scrollHeight;
+}
+$('#btnClearMon').onclick = () => { monText = ''; renderMon(); };
+
+/* ---------------------------------------------------------------
+   USB / Web Serial + MicroPython raw REPL
+   --------------------------------------------------------------- */
+let port = null, writer = null, reader = null, connected = false, quiet = false, rx = '', busy = false;
+const enc = new TextEncoder();
+
+function setConn(on) {
+  connected = on;
+  $('#btnConnect').classList.toggle('on', on);
+  $('#connLabel').textContent = on ? 'Coggy connected' : 'Connect Coggy';
+  $('#statusText').textContent = on ? 'Coggy connected by USB' : 'Not connected';
+}
+async function connect() {
+  if (!('serial' in navigator)) { message('🌐', 'Use Chrome or Edge', 'USB uploading works in <b>Google Chrome</b> or <b>Microsoft Edge</b> on a laptop or desktop computer.'); return false; }
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    try { await port.setSignals({ dataTerminalReady: false, requestToSend: false }); } catch (e) {}
+    writer = port.writable.getWriter();
+    setConn(true);
+    readLoop();
+    toast('🔌 Coggy connected!', 'ok');
+    return true;
+  } catch (e) {
+    if (e.name !== 'NotFoundError') message('😕', "Couldn't open Coggy", `Make sure the USB cable is plugged in and no other app (like Arduino IDE or Thonny) is using Coggy.<br><br><small>${esc(String(e.message || e))}</small>`);
+    port = null;
+    return false;
+  }
+}
+async function readLoop() {
+  const dec = new TextDecoder();
+  while (port && port.readable && connected) {
+    reader = port.readable.getReader();
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const s = dec.decode(value, { stream: true });
+        rx += s;
+        if (!quiet) { monAppend(s); if (rx.length > 8000) rx = rx.slice(-4000); }
+      }
+    } catch (e) { /* device lost */ }
+    finally { try { reader.releaseLock(); } catch (e) {} }
+  }
+}
+async function disconnect() {
+  connected = false;
+  try { await reader?.cancel(); } catch (e) {}
+  try { writer?.releaseLock(); } catch (e) {}
+  try { await port?.close(); } catch (e) {}
+  port = null; writer = null;
+  setConn(false);
+}
+if ('serial' in navigator) navigator.serial.addEventListener('disconnect', e => { if (e.target === port) { disconnect(); toast('🔌 Coggy was unplugged', 'bad'); } });
+else $('#serialBanner').classList.add('show');
+
+$('#btnConnect').onclick = async () => { if (busy) return; if (connected) { await disconnect(); toast('Disconnected'); } else await connect(); };
+
+async function send(data) {
+  const bytes = typeof data === 'string' ? enc.encode(data) : data;
+  for (let i = 0; i < bytes.length; i += 256) {
+    await writer.write(bytes.slice(i, i + 256));
+    if (bytes.length > 256) await sleep(10);
+  }
+}
+async function waitFor(token, ms = 3000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    const i = rx.indexOf(token);
+    if (i >= 0) { const out = rx.slice(0, i); rx = rx.slice(i + token.length); return out; }
+    await sleep(8);
+  }
+  throw new Error('TIMEOUT');
+}
+const RAW_BANNER = 'raw REPL; CTRL-B to exit\r\n>';
+async function enterRaw() {
+  quiet = true;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await send('\r\x03'); await sleep(120); await send('\x03'); await sleep(120);
+    rx = '';
+    await send('\x01');
+    try {
+      await waitFor(RAW_BANNER, 1500);
+      await send('\x04');                     // soft reset: frees memory & pins
+      await waitFor('soft reboot', 3000);
+      await waitFor(RAW_BANNER, 4000);
+      rx = '';
+      return;
+    } catch (e) { await sleep(400); }
+  }
+  throw new Error('NO_MICROPYTHON');
+}
+async function execRaw(code, ms = 4000) {
+  rx = '';
+  await send(code);
+  await send('\x04');
+  await waitFor('OK', 2500);
+  const out = await waitFor('\x04', ms);
+  const err = await waitFor('\x04', ms);
+  await waitFor('>', ms);
+  if (err.trim()) throw new Error('PY:' + err.trim());
+  return out;
+}
+async function writeFile(name, text, onProgress) {
+  await execRaw(`f=open('${name}','w')`);
+  const chars = Array.from(text), CH = 400;
+  for (let i = 0; i < chars.length; i += CH) {
+    await execRaw('f.write(' + JSON.stringify(chars.slice(i, i + CH).join('')) + ')');
+    onProgress && onProgress(Math.min(1, (i + CH) / chars.length));
+  }
+  await execRaw('f.close()');
+}
+function prog_(title, pct, step) {
+  $('#progTitle').textContent = title;
+  $('#progBar').style.width = pct + '%';
+  $('#progStep').textContent = step;
+}
+
+async function upload() {
+  if (busy) return;
+  const g = generate();
+  if (!g.ok) { message('🧩', 'Add the Coggy Program block', 'Drag the orange <b>🚀 Coggy Program</b> block from the <b>Start</b> category, then put your blocks inside it.'); return; }
+  if (g.many) { message('✋', 'Only one Coggy Program please', 'You have more than one <b>Coggy Program</b> block. Delete the extra ones so Coggy knows what to run.'); return; }
+  if (!connected && !(await connect())) return;
+  busy = true;
+  openOv('#progress');
+  try {
+    prog_('Uploading to Coggy…', 8, '👋 Waking up Coggy');
+    await enterRaw();
+    prog_('Uploading to Coggy…', 22, '🔍 Checking helper library');
+    const size = parseInt((await execRaw("import os\ntry:\n print(os.stat('coggy.py')[6])\nexcept OSError:\n print(-1)")).trim(), 10);
+    if (size !== LIB_BYTES) {
+      await writeFile('coggy.py', COGGY_LIB, p => prog_('Uploading to Coggy…', 25 + p * 45, '📚 Installing Coggy helper library (first time only)'));
+    }
+    prog_('Uploading to Coggy…', 75, '🧩 Sending your blocks');
+    await writeFile('main.py', g.code, p => prog_('Uploading to Coggy…', 75 + p * 18, '🧩 Sending your blocks'));
+    prog_('Uploading to Coggy…', 96, '▶️ Starting your program');
+    rx = ''; quiet = false;
+    monAppend('\n──── 🚀 Program uploaded — running! ────\n');
+    await send('\x02'); await sleep(60);
+    await send('\x04');
+    prog_('Done!', 100, '🎉 Your program is running on Coggy');
+    await sleep(600);
+    $('#progress').classList.remove('show');
+    showTab('monPane');
+    toast('🎉 Uploaded! Your program is running.', 'ok');
+  } catch (e) {
+    quiet = false;
+    $('#progress').classList.remove('show');
+    const m = String(e.message || e);
+    if (m === 'NO_MICROPYTHON') message('🤔', "Coggy didn't answer", `Block Studio couldn't talk to Coggy. Try this:<ul><li>Press the <b>EN / RST</b> button on Coggy and click Upload again.</li><li>Close other apps using Coggy (Arduino IDE, Thonny, another tab).</li><li>Coggy needs <b>MicroPython firmware</b> — ask your teacher to flash it once.</li></ul>`);
+    else if (m.startsWith('PY:')) message('🐞', 'Coggy reported a problem', `<pre style="white-space:pre-wrap;background:#FEF2F2;color:#B91C1C;padding:10px;border-radius:12px;font-size:12.5px">${esc(m.slice(3))}</pre>`);
+    else message('😕', 'Upload stopped', `Something went wrong while talking to Coggy. Unplug the USB cable, plug it back in, click <b>Connect</b> and try again.<br><br><small>${esc(m)}</small>`);
+  } finally { busy = false; }
+}
+$('#btnUpload').onclick = upload;
+
+$('#btnStop').onclick = async () => {
+  if (!connected) { toast('Connect Coggy first', 'bad'); return; }
+  if (busy) return;
+  await send('\x03\x03');
+  monAppend('\n──── ⏹ Program stopped ────\n');
+  toast('⏹ Program stopped');
+};
+$('#btnReset').onclick = async () => {
+  if (!connected || busy) { toast('Connect Coggy first', 'bad'); return; }
+  try {
+    await port.setSignals({ dataTerminalReady: false, requestToSend: true }); await sleep(120);
+    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+    monAppend('\n──── 🔄 Restarting Coggy ────\n');
+  } catch (e) { await send('\x03\x04'); }
+};
+$('#btnErase').onclick = async () => {
+  if (!connected || busy) { toast('Connect Coggy first', 'bad'); return; }
+  if (!confirm('Remove the program saved on Coggy? (Your blocks here stay safe.)')) return;
+  busy = true;
+  try {
+    await enterRaw();
+    await writeFile('main.py', '# empty - erased by CognoSpace Block Studio\n');
+    quiet = false; await send('\x02');
+    toast('🧹 Coggy is now empty', 'ok');
+  } catch (e) { quiet = false; toast("Couldn't erase — is MicroPython installed?", 'bad'); }
+  finally { busy = false; }
+};
+async function sendLine() {
+  const v = $('#sendInput').value;
+  if (!connected) { toast('Connect Coggy first', 'bad'); return; }
+  await send(v + '\r\n');
+  $('#sendInput').value = '';
+}
+$('#btnSend').onclick = sendLine;
+$('#sendInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendLine(); });
+
+/* ---------------------------------------------------------------
+   Start-up
+   --------------------------------------------------------------- */
+buildExamples();
+let restored = false;
+try {
+  const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+  if (saved && saved.blocks) { restore(saved); restored = true; }
+} catch (e) {}
+if (!restored) { loadXml(EXAMPLES[0].xml); $('#projName').value = 'My First Blink'; }
+refresh();
+renderMon();
+let hideWelcome = false;
+try { hideWelcome = localStorage.getItem(LS_KEY + '_nowelcome') === '1'; } catch (e) {}
+if (!hideWelcome) openOv('#welcome');
+</script>
+</body>
+</html>
